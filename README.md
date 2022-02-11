@@ -44,3 +44,5 @@ Laboratory work within the course "Signal processing and interpretation"
 - На фото располагаются целиком (все границы видны)
 
 
+### Датасет
+[Датасет](https://drive.google.com/drive/folders/1tJ5O16u1zSXOTFghZGYCDElBW5bynx61?usp=sharing)
