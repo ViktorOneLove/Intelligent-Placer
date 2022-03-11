@@ -71,7 +71,7 @@ def find_paper_and_polygon_contours(folder: str, file_name: str, path_to_save: s
     return polygon_contours, paper_contours
 
 
-def find_objects_contours(image_path: str, paper_contours: np.ndarray) -> Optional[np.ndarray]:
+def find_objects_contours(image_path: str, paper_contours: np.ndarray):
     def get_objects_area(image: np.ndarray, paper_contours: np.ndarray) -> np.ndarray:
         margin = 10
         paper_area_right_max_x = max(paper_contours, key=lambda points: points[0][0])[0][0]
@@ -103,6 +103,10 @@ def find_objects_contours(image_path: str, paper_contours: np.ndarray) -> Option
 
     # loop over the unique labels returned by the Watershed
     # algorithm
+
+    min_enclosing_rects = []
+    boxes = []
+
     for label in np.unique(labels):
         # if the label is zero, we are examining the 'background'
         # so simply ignore it
@@ -121,11 +125,13 @@ def find_objects_contours(image_path: str, paper_contours: np.ndarray) -> Option
         c = max(cnts, key=cv2.contourArea)
 
         min_enclosing_rect = objects_area.copy()
+        min_enclosing_rects.append(min_enclosing_rect)
         rect = cv2.minAreaRect(c)
         box = cv2.boxPoints(rect)
         box = np.int0(box)
+        boxes.append(box)
 
-    return None
+    return min_enclosing_rects, boxes
 
 
 def can_objects_fit_in_polygon(polygon_contours: np.ndarray, objects_contours: np.ndarray) -> bool:
