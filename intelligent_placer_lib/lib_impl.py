@@ -20,9 +20,9 @@ import imutils
 """
 
 
-def find_paper_and_polygon_contours(folder: str, file_name: str, path_to_save: str) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
-    image_path = os.path.join(folder, file_name)
-    img = cv2.imread(image_path)
+def find_paper_and_polygon_contours(path_to_img: str) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
+    # image_path = os.path.join(folder, file_name)
+    img = cv2.imread(path_to_img)
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     lower_white = [0, 0, 168]
@@ -64,21 +64,21 @@ def find_paper_and_polygon_contours(folder: str, file_name: str, path_to_save: s
     idx = area_contours.index(max(area_contours))
     paper_contours = good_contours[idx]
 
-    cv2.drawContours(img, [paper_contours], 0, (255, 0, 0), 8)
-    cv2.drawContours(img, [polygon_contours], 0, (0, 255, 0), 8)
-    cv2.imwrite(os.path.join(path_to_save, file_name), img)
+    # cv2.drawContours(img, [paper_contours], 0, (255, 0, 0), 8)
+    # cv2.drawContours(img, [polygon_contours], 0, (0, 255, 0), 8)
+    # cv2.imwrite(os.path.join(path_to_save, file_name), img)
 
     return polygon_contours, paper_contours
 
 
-def find_objects_contours(image_path: str, paper_contours: np.ndarray):
+def find_objects_contours(path_to_img: str, paper_contours: np.ndarray):
     def get_objects_area(image: np.ndarray, paper_contours: np.ndarray) -> np.ndarray:
         margin = 10
         paper_area_right_max_x = max(paper_contours, key=lambda points: points[0][0])[0][0]
         objects_area_left_min_x = paper_area_right_max_x + margin
         return image[objects_area_left_min_x:, ::, ::]
 
-    img = cv2.imread(image_path)
+    img = cv2.imread(path_to_img)
     objects_area = get_objects_area(img, paper_contours)
 
     shifted = cv2.pyrMeanShiftFiltering(objects_area, 21, 51)
