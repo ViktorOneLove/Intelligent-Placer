@@ -1,8 +1,13 @@
 import os.path
 from typing import Tuple, Optional
+from scipy import ndimage
+from skimage.feature import peak_local_max
+from skimage.segmentation import watershed
 
 import numpy as np
 import cv2
+import imutils
+
 
 """
     План дальнейшей работы:
@@ -75,6 +80,50 @@ def find_objects_contours(image_path: str, paper_contours: np.ndarray) -> Option
 
     img = cv2.imread(image_path)
     objects_area = get_objects_area(img, paper_contours)
+
+    shifted = cv2.pyrMeanShiftFiltering(objects_area, 21, 51)
+
+    # convert the mean shift image to grayscale, then apply
+    # Otsu's thresholding
+    gray = cv2.cvtColor(shifted, cv2.COLOR_BGR2GRAY)
+    thresh = cv2.threshold(gray, 0, 255,
+                           cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+
+    # compute the exact Euclidean distance from every binary
+    # pixel to the nearest zero pixel, then find peaks in this
+    # distance map
+    D = ndimage.distance_transform_edt(thresh)
+    localMax = peak_local_max(D, indices=False, min_distance=20,
+                              labels=thresh)
+
+    # perform a connected component analysis on the local peaks,
+    # using 8-connectivity, then appy the Watershed algorithm
+    markers = ndimage.label(localMax, structure=np.ones((3, 3)))[0]
+    labels = watershed(-D, markers, mask=thresh)
+
+    # loop over the unique labels returned by the Watershed
+    # algorithm
+    for label in np.unique(labels):
+        # if the label is zero, we are examining the 'background'
+        # so simply ignore it
+        if label == 0:
+            continue
+
+        # otherwise, allocate memory for the label region and draw
+        # it on the mask
+        mask = np.zeros(gray.shape, dtype="uint8")
+        mask[labels == label] = 255
+
+        # detect contours in the mask and grab the largest one
+        cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
+                                cv2.CHAIN_APPROX_SIMPLE)
+        cnts = imutils.grab_contours(cnts)
+        c = max(cnts, key=cv2.contourArea)
+
+        min_enclosing_rect = objects_area.copy()
+        rect = cv2.minAreaRect(c)
+        box = cv2.boxPoints(rect)
+        box = np.int0(box)
 
     return None
 
