@@ -3,14 +3,6 @@ import lib_api
 import json
 
 
-# def write_answer(file_name, folder_to_save_answers, answer):
-#     file_name_without_ext, _ = os.path.splitext(file_name)
-#     ext = '.txt'
-#     full_file_to_write_path = os.path.join(folder_to_save_answers, 'answer_' + file_name_without_ext + ext)
-#     with open(full_file_to_write_path, 'w') as f:
-#         f.write('1' if answer == True else '0')
-
-
 def count_accuracy(folder_with_images, should_objects_fit, all_answers):
     files = os.listdir(folder_with_images)
     num_of_correct_answers = 0

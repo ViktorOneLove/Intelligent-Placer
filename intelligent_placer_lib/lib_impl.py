@@ -22,28 +22,6 @@ def find_paper_contours_and_polygon_mask(path_to_img: str) -> Tuple[Optional[np.
         :return: контур бумаги и маску многоугольника
     """
 
-    def get_extreme_points(contours: np.ndarray) -> Tuple[int, int, int, int]:
-        """
-            Находит крайние точки контура
-
-            :param contours: контур
-            :return: x_most_left, x_most_right, y_most_bottom, y_most_up
-        """
-        x_most_left = sys.maxsize
-        x_most_right = -1
-        y_most_bottom = sys.maxsize
-        y_most_up = -1
-
-        for point in contours:
-            x = point[0][1]
-            y = point[0][0]
-            x_most_left = min(x_most_left, x)
-            x_most_right = max(x_most_right, x)
-            y_most_bottom = min(y_most_bottom, y)
-            y_most_up = max(y_most_up, y)
-
-        return x_most_left, x_most_right, y_most_bottom, y_most_up
-
     def create_mask_from_contours(contours: np.ndarray) -> np.ndarray:
         """
             Создает маску на основе контура
@@ -51,13 +29,13 @@ def find_paper_contours_and_polygon_mask(path_to_img: str) -> Tuple[Optional[np.
             :param contours: контур
             :return: созданную маску, внутри контура заполненную значением False
         """
-        x_most_left, x_most_right, y_most_bottom, y_most_up = get_extreme_points(contours)
-        height = y_most_up - y_most_bottom + 1
-        width = x_most_right - x_most_left + 1
+        bbox = cv2.boundingRect(contours)
+
+        x_most_left, width, y_most_bottom, height = bbox[1], bbox[3], bbox[0], bbox[2]
 
         mask = np.full((width, height), True, dtype=bool)
-        for y in range(y_most_bottom, y_most_up + 1):
-            for x in range(x_most_left, x_most_right + 1):
+        for y in range(y_most_bottom, y_most_bottom + height):
+            for x in range(x_most_left, x_most_left + width):
                 if cv2.pointPolygonTest(contours, (y, x), False) >= 0:
                     mask[x - x_most_left][y - y_most_bottom] = False
 
@@ -273,6 +251,8 @@ def can_objects_fit_in_polygon(polygon_mask: np.ndarray, object_masks_with_areas
                     return True
 
         return False
+
+    object_masks_with_areas.sort(key=lambda each_tuple: each_tuple[1], reverse=True)
 
     for object_mask, object_area in object_masks_with_areas:
         if not can_object_fit_in_polygon(polygon_mask, object_mask):
