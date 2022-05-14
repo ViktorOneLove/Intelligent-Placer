@@ -1,14 +1,19 @@
+import matplotlib.pyplot as plt
+
 import lib_impl as lib
 
 
 def check_image(path_to_img: str) -> bool:
-    polygon_contours, paper_contours = lib.find_paper_and_polygon_contours(path_to_img)
+    paper_contours, polygon_mask = lib.find_paper_contours_and_polygon_mask(path_to_img)
 
-    assert polygon_contours is not None
-    assert paper_contours is not None
+    assert paper_contours is not None, 'cannot find paper'
+    assert polygon_mask is not None, 'cannot find polygon on paper'
 
-    objects_contours = lib.find_objects_contours(path_to_img, paper_contours)
+    plt.imshow(polygon_mask)
+    plt.show()
 
-    assert objects_contours is not None
+    object_masks_with_areas = lib.find_object_masks_with_areas(path_to_img, paper_contours)
 
-    return lib.can_objects_fit_in_polygon(polygon_contours, objects_contours)
+    assert object_masks_with_areas, 'cannot recognize objects'
+
+    return lib.can_objects_fit_in_polygon(polygon_mask, object_masks_with_areas)
